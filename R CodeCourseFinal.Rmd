@@ -1,0 +1,1003 @@
+---
+title: "Cours R Data Analytics Marketing @TBS"
+author: "Adam Green and SylvieB" 
+from R for Marketing Research and Analytics by Chris Chapman and Elea McDonnell Feit 
+date: "18/10/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Packages
+library(tidyverse)
+library(summarytools)
+```
+
+
+## INTRO
+
+
+# Store data
+# ==========
+```{r}
+store.num <- factor(c(3, 14, 21, 32, 54)) # store id
+store.rev <- c(543, 654, 345, 678, 234)   # store revenue, $K
+store.visits <- c(45, 78, 32, 56, 34)     # visits, 1000s
+store.manager <- c("Annie", "Bert", "Carla", "Dave", "Ella")
+
+(store.df <- data.frame(store.num, store.rev, store.visits,
+                        store.manager, stringsAsFactors=T))
+
+str(store.df)
+```
+
+
+
+
+# Some data checks
+# ==========
+```{r}
+summary(store.df)   # always recommended!
+
+store.df$store.manager
+mean(store.df$store.rev)
+```
+
+
+
+
+# Read and write CSVs
+# ==========
+```{r}
+write.csv(store.df, row.names=FALSE)
+write.csv(store.df, file="store-df.csv", row.names=FALSE)
+read.csv("store-df.csv")  # "file=" is optional
+```
+
+
+
+
+# Exercise!
+# ==========
+```{r}
+library(car)    # install.packages("car") if needed
+data(Salaries)
+```
+
+
+
+
+# One Set of Answers
+# ==========
+```{r}
+dim(Salaries)                             # or even better: str(Salaries) or glimpse(Salaries)
+
+str(Salaries)
+glimpse(Salaries)
+
+
+sum(Salaries$yrs.service > 40)
+
+
+Salaries[Salaries$yrs.service > 20, ]      # output not shown
+
+mean(Salaries[Salaries$yrs.service > 20, "salary"])
+
+?Salaries
+
+```
+
+
+
+
+# Loading and saving raw data formats
+# ==========
+
+```{r}
+
+save(store.df, file="store-df-backup.RData")
+
+rm(store.df) #rm used to delete objects from the memory. It can be used with ls() function to delete all objects     
+
+mean(store.df$store.rev)     # error
+
+load("store-df-backup.RData")
+mean(store.df$store.rev)     # works now
+```
+
+
+
+# Loading data has silent overwrite
+# ==========
+
+```{r}
+store.df <- 5
+store.df
+load("store-df-backup.RData")
+store.df
+```
+
+
+
+
+
+####################################"
+
+## 1. Describing Data
+ 
+
+# Load the data
+# ==========
+
+```{r}
+
+store.df <- read.csv("http://goo.gl/QPDdMl")
+summary(store.df)
+
+```
+
+
+
+# Descriptives 1
+# ==========
+```{r}
+table(store.df$p1price)
+
+prop.table(table(store.df$p1price))
+```
+
+
+
+
+# Table as an object
+# ==========
+```{r}
+p1.table <- table(store.df$p1price)
+p1.table
+p1.table[3]
+str(p1.table)
+```
+
+
+
+
+# Plotting a table (basic)
+# ==========
+
+```{r}
+plot(p1.table)
+```
+
+
+
+
+# Two-way tables
+# ==========
+```{r}
+table(store.df$p1price, store.df$p1prom)
+```
+
+
+
+
+# Core Descriptive Functions
+# ==========
+
+```{r}
+min(store.df$p1sales)
+max(store.df$p2sales)
+mean(store.df$p1prom)
+median(store.df$p2sales)
+
+
+var(store.df$p1sales)
+sd(store.df$p1sales)
+IQR(store.df$p1sales)
+mad(store.df$p1sales)
+```
+
+
+
+
+# Percentile (Quantile) function
+# ==========
+
+```{r}
+
+quantile(store.df$p1sales)   # default = 0:4*0.25
+quantile(store.df$p1sales, probs=c(0.25, 0.75)) # Interquartile
+quantile(store.df$p1sales, probs=c(0.025, 0.975)) # central 95%
+quantile(store.df$p1sales, probs=1:10/10)  # shortcut
+```
+
+
+
+# Summary of data frame
+# ==========
+```{r}
+summary(store.df)
+```
+
+
+
+
+# Summary of data frame elements
+# ==========
+
+```{r}
+
+summary(store.df$p1sales)
+summary(store.df$p1sales, digits=2)  # round output
+```
+
+
+
+# Visualization: Steps to Prettify (1)
+# ==========
+```{r}
+
+hist(store.df$p1sales)
+```
+
+
+
+# Improve it with labels
+# ==========
+
+```{r}
+hist(store.df$p1sales, 
+     main="Product 1 Weekly Sales Frequencies, All Stores",
+     xlab="Product 1 Sales (Units)",
+     ylab="Count" )
+```
+
+           
+
+
+# Make it more granular and colorful
+# ==========
+```{r}
+hist(store.df$p1sales, 
+     main="Product 1 Weekly Sales Frequencies, All Stores",
+     xlab="Product 1 Sales (Units)",
+     ylab="Count",
+     breaks=100,             # more columns 
+     col="lightblue")       # color the bars
+```
+
+
+
+
+# Change counts to proportions
+# ==========
+```{r}
+hist(store.df$p1sales, 
+     main="Product 1 Weekly Sales Frequencies, All Stores",
+     xlab="Product 1 Sales (Units)",
+     ylab="Relative frequency", # changed
+     breaks=30, 
+     col="lightblue", 
+     freq=FALSE )                # freq=FALSE for density
+```
+
+
+
+
+# Add density curve
+# ==========
+```{r}
+
+hist(store.df$p1sales, 
+     main="Product 1 Weekly Sales Frequencies, All Stores",
+     xlab="Product 1 Sales", ylab="Relative frequency",
+     breaks=30, col="lightblue", freq=FALSE)
+
+lines(density(store.df$p1sales, bw=10),  # bw = smoothing
+      type="l", col="darkred", lwd=2)    # lwd = line width
+```
+
+
+
+# Boxplot 
+# ==========
+```{r}
+
+str(store.df)
+boxplot(store.df$p2sales, xlab="Weekly sales", ylab="P2",
+        main="Weekly sales of P2, All stores", horizontal=TRUE)
+```
+
+
+
+
+
+# Boxplot broken out by factor
+# ==========
+```{r}
+
+boxplot(store.df$p2sales ~ store.df$storeNum, horizontal=TRUE,
+     ylab="Store", xlab="Weekly unit sales", las=1,
+     main="Weekly Sales of P2 by Store")
+```
+
+
+
+
+# Boxplot with data and axes
+# ==========
+
+```{r}
+boxplot(p2sales ~ p2prom, data=store.df, horizontal=TRUE, 
+        yaxt="n", ylab="P2 promoted in store", 
+        xlab="Weekly sales", main="Sales of P2 vs promotion")
+axis(side=2, at=c(1,2), labels=c("No", "Yes"), las=1)
+```
+
+
+# Nicer boxplot with ggplot2
+
+```{r}
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+library(RColorBrewer)
+
+
+str(store.df)
+store.df$p2prom <- as.factor(store.df$p2prom)
+
+# Rename items of factors "Stim"Promotions"
+levels(store.df$p2prom)[levels(store.df$p2prom)=="0"] <- "No promotion"
+levels(store.df$p2prom)[levels(store.df$p2prom)=="1"] <- "Promotion"
+
+store.df %>%
+  ggplot(aes(x=p2prom, y=p2sales, fill=p2prom)) +
+    geom_boxplot() +
+    scale_fill_manual(values = c("#edae49", "#00798c"))+
+    geom_jitter(color="black", size=0.4, alpha=0.9) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Sales of P2 vs promotion") +
+    xlab("")
+
+
+
+
+```
+
+
+
+```{r}
+
+plot(ecdf(store.df$p1sales),
+     main="Cumulative distribution of P1 Weekly Sales",
+     ylab="Cumulative Proportion",
+     xlab=c("P1 weekly sales, all stores", "90% of weeks sold <= 171 units"),
+     yaxt="n")
+axis(side=2, at=seq(0, 1, by=0.1), las=1, 
+     labels=paste(seq(0,100,by=10), "%", sep=""))
+# add lines for 90%
+abline(h=0.9, lty=3)
+abline(v=quantile(store.df$p1sales, pr=0.9), lty=3)
+```
+
+
+
+
+
+# by()
+# ==========
+```{r}
+by(store.df$p1sales, store.df$storeNum, mean)
+```
+
+
+
+
+# aggregate()
+# ==========
+```{r}
+storeMean <- aggregate(store.df$p1sales, 
+                       by=list(store=store.df$storeNum), mean)
+storeMean
+```
+
+
+
+
+# Exercise!
+# ==========
+```{r}
+library(car)    # install.packages("car") if needed
+data(Salaries)
+```
+
+
+
+
+# Answers (1)
+# ==========
+```{r}
+
+table(Salaries$rank, Salaries$sex)
+prop.table(table(Salaries$rank, Salaries$sex))
+prop.table(table(Salaries$rank, Salaries$sex), margin=2)
+```
+
+
+
+# Answers (2)
+# ==========
+
+```{r}
+hist(Salaries$yrs.service, freq=FALSE)
+lines(density(Salaries$yrs.service), col="red")
+```
+
+
+
+
+# Answers (3)
+# ==========
+
+```{r}
+
+boxplot(Salaries$salary)
+```
+
+
+
+# Answers (4)
+# ==========
+
+```{r}
+boxplot(Salaries$salary ~ Salaries$rank, horizontal=TRUE)
+```
+
+
+
+
+# Indexing with tables
+# ==========
+
+```{r}
+table(store.df$p1price, store.df$p1prom)
+
+p1.table2 <- table(store.df$p1price, store.df$p1prom)
+p1.table2[, 2] / (p1.table2[, 1] + p1.table2[, 2])
+```
+
+
+
+
+# Describe (psych package)
+# ==========
+
+```{r}
+library(psych)   # must install first
+describe(store.df)
+```
+
+
+
+
+# Aggregate sales by country
+# ==========
+
+```{r}
+p1sales.sum <- aggregate(store.df$p1sales, 
+                         by=list(country=store.df$country), sum)
+p1sales.sum
+
+```
+
+
+
+# Plot sales by country with rworldmap()
+# ==========
+
+```{r}
+
+library(rworldmap)    # must be installed
+library(RColorBrewer) # must be installed
+
+p1sales.map <- joinCountryData2Map(p1sales.sum, 
+                                   joinCode = "ISO2", 
+                                   nameJoinColumn = "country")
+```
+
+
+
+# Draw the map
+# ==========
+
+```{r}
+mapCountryData(p1sales.map, nameColumnToPlot="x", 
+               mapTitle="Total P1 sales by Country",
+               colourPalette=brewer.pal(7, "Greens"), 
+               catMethod="fixedWidth", addLegend=FALSE)
+```
+
+
+           
+
+
+####################################"
+
+## 2. Comparing Groups: Statistical Tests
+
+
+
+# Load the data 
+# ==========
+
+```{r}
+seg.df <- read.csv("http://goo.gl/qw303p")
+summary(seg.df)
+str(seg.df)
+```
+
+
+
+
+# Chi-square test
+# ==========
+```{r}
+tmp.tab <- table(rep(c(1:4), times=c(25,25,25,20)))
+tmp.tab
+chisq.test(tmp.tab)
+```
+
+
+
+
+# chisq.test "significant" and "not significant"
+# ==========
+```{r}
+tmp.tab <- table(rep(c(1:4), times=c(25,25,25,20)))
+chisq.test(tmp.tab)
+
+tmp.tab <- table(rep(c(1:4), times=c(25,25,25,10)))
+tmp.tab
+chisq.test(tmp.tab)
+```
+
+
+
+
+# chisq.test with segment data
+# ==========
+```{r}
+
+table(seg.df$Segment)
+chisq.test(table(seg.df$Segment))
+```
+
+
+
+# chisq.test with segment data
+# ==========
+```{r}
+table(seg.df$subscribe, seg.df$ownHome)
+chisq.test(table(seg.df$subscribe, seg.df$ownHome))
+
+chisq.test(table(seg.df$subscribe, seg.df$ownHome), correct=FALSE)
+```
+
+
+
+
+# Proportions: binomial test
+# ==========
+```{r}
+binom.test(12, 20, p=0.5)
+```
+
+
+
+
+# Proportions: binomial test continued
+# ==========
+# binom.test(12, 20, p=0.5)
+
+```{r}
+
+binom.test(120, 200, p=0.5)
+```
+
+
+
+# t-tests
+# ==========
+
+```{r}
+library(lattice)
+bwplot(income ~ ownHome, data=seg.df)
+```
+
+
+
+
+# t.test()
+# ==========
+```{r}
+t.test(income ~ ownHome, data=seg.df)
+```
+
+
+
+
+# t.test() for a subset() of data
+# ==========
+```{r}
+t.test(income ~ ownHome, data=subset(seg.df, Segment=="Travelers"))
+```
+
+
+
+
+# ANOVA basics
+# ==========
+
+```{r}
+seg.aov.own <- aov(income ~ ownHome, data=seg.df)
+anova(seg.aov.own)
+```
+
+
+
+
+# ANOVA: Multiple groups
+# ==========
+
+```{r}
+aggregate(income ~ Segment, mean, data=seg.df)
+seg.aov.seg <- aov(income ~ Segment, data=seg.df)
+anova(seg.aov.seg)
+```
+
+
+
+
+
+# ANOVA with Segment + Ownership
+# ==========
+
+```{r}
+anova(aov(income ~ Segment + ownHome, data=seg.df))
+
+anova(aov(income ~ ownHome, data=seg.df))
+```
+
+
+
+
+# ANOVA with interaction
+# ==========
+
+```{r}
+anova(aov(income ~ Segment * ownHome, data=seg.df))
+
+anova(aov(income ~ Segment + ownHome + Segment:ownHome, data=seg.df))
+```
+
+
+
+
+# Model Comparison
+# ==========
+
+```{r}
+
+anova(aov(income ~ Segment,           data=seg.df),
+      aov(income ~ Segment + ownHome, data=seg.df))
+```
+
+
+
+
+# Visualization: ANOVA Group means
+# ==========
+# install.packages("multcomp")     # if needed
+
+```{r}
+library(multcomp)
+seg.aov <- aov(income ~ -1 + Segment, data=seg.df)   # model w/o int.
+by.seg  <- glht(seg.aov)                             # means and CIs
+plot(by.seg, xlab="Income", main="Mean Income by Segment (95% CI)")
+```
+
+
+
+
+# Exercises (Basic)
+# ==========
+
+```{r}
+
+library(car)    # install.packages("car") if needed
+data(Salaries)
+```
+
+
+
+# Answers (1)
+# ==========
+
+```{r}
+with(Salaries, prop.table(table(discipline, sex), margin=1))
+with(Salaries, chisq.test(table(discipline, sex)))
+```
+
+
+
+
+# Answers (2)
+# ==========
+
+```{r}
+aggregate(salary ~ sex, data=Salaries, mean)
+anova(aov(salary ~ sex, data=Salaries))
+```
+
+
+
+
+# Answers (3)
+# ==========
+# install.packages("multcomp")     # if needed
+
+```{r}
+library(multcomp)
+salary.aov <- aov(salary ~ -1 + sex, data=Salaries)
+by.sex  <- glht(salary.aov)                           
+plot(by.sex, xlab="Salary", main="Mean Salary with 95% CI")
+```
+
+
+
+
+####################################"
+
+## 3. Identifying Drivers of Outcomes: Linear Models
+
+
+# Satisfaction survey data
+# ==========
+```{r}
+
+sat.df <- read.csv("http://goo.gl/HKnl74")
+```
+
+
+
+# Inspecting the data
+# ==========
+```{r}
+summary(sat.df)
+str(sat.df)
+```
+
+
+
+
+# Plotting the data
+# ==========
+```{r}
+library(gpairs)
+gpairs(sat.df)
+```
+
+
+
+
+# Transforming some variables
+# ==========
+```{r}
+hist(sat.df$distance)
+
+sat.df$logdist <- log(sat.df$distance)
+hist(sat.df$logdist)
+```
+
+
+
+
+# corrplot: an alternative to the scatterplot matrix
+# ==========
+
+```{r}
+
+library(corrplot)
+corrplot.mixed(cor(sat.df[ , c(2, 4:9)]), upper="ellipse") 
+```
+
+
+
+# Fitting a model with one predictor
+# ==========
+
+```{r}
+lm(overall ~ rides, data=sat.df)
+
+-94.962 + 1.703*95
+```
+
+
+
+
+# Model objects
+# ==========
+
+```{r}
+m1 <- lm(overall ~ rides, data=sat.df)
+m1
+str(m1)
+```
+
+
+# A plot of the model
+# ==========
+
+```{r}
+
+plot(overall ~ rides, data=sat.df,
+     xlab="Satisfaction with Rides", ylab="Overall Satisfaction")
+abline(m1, col='blue')
+```
+
+
+
+# Model summary
+# ==========
+
+```{r}
+summary(m1)
+```
+
+
+# Model assumptions
+# ==========
+
+```{r}
+x <- rnorm(500)
+y <- x^2 + rnorm(500)
+toy.model <- lm(y ~ x)
+summary(toy.model)
+
+
+```
+
+
+
+
+# Model assumptions
+# ==========
+```{r}
+plot(y ~ x)
+abline(toy.model)
+
+#other try:
+x <- rnorm(500)
+y <- 100+ rnorm(500)
+toy.model <- lm(y ~ x)
+summary(toy.model)
+```
+
+
+
+
+# Standard plots for assessing model fit
+# ==========
+```{r}
+par(mfrow=c(2,2))
+plot(m1)
+
+#Reminder:
+#m1 <- lm(overall ~ rides, data=sat.df)
+```
+
+
+
+
+# Inspecting outliers
+# ==========
+
+```{r}
+#see last plot Residual vs. Leverage in plot(m1)
+sat.df[c(57, 129, 295),]
+```
+
+
+
+# Fitting a model with multiple predictors
+# ==========
+
+```{r}
+m2 <- lm(overall ~ rides + games + wait + clean, data=sat.df)
+summary(m2)
+```
+
+
+# Presenting the findings
+# ==========
+
+```{r}
+library(coefplot)
+coefplot(m2, intercept=FALSE, outerCI=1.96, lwdOuter=1.5,
+ylab="Rating of Feature", 
+xlab="Association with Overall Satisfaction")
+```
+
+
+
+
+# Comparing two models: R-squared
+# ==========
+
+```{r}
+summary(m1)$r.squared # single predictor: rides
+summary(m2)$r.squared # multple predictors
+summary(m1)$adj.r.squared
+summary(m2)$adj.r.squared
+```
+
+
+
+
+# Comparing models: visually
+# ==========
+```{r}
+plot(sat.df$overall, fitted(m1), col='red',
+     xlim=c(0,100), ylim=c(0,100),
+     xlab="Actual Overall Satisfaction", ylab="Fitted Overall Satisfaction")
+points(sat.df$overall, fitted(m2), col='blue')
+legend("topleft", legend=c("model 1", "model 2"), 
+       col=c("red", "blue"), pch=1)
+```
+
+
+
+
+# Comparing models: formal statistical test
+# ==========
+
+```{r}
+anova(m1, m2)
+```
+
+
+# Making predictions
+# ==========
+
+```{r}
+coef(m2)["(Intercept)"] + coef(m2)["rides"]*100 + coef(m2)["games"]*100 + 
+  coef(m2)["wait"]*100 + coef(m2)["clean"]*100 
+
+coef(m2)%*%c(1, 100, 100, 100, 100)
+
+
+```
+
+
+# Making predictions
+# ==========
+
+```{r}
+
+predict(m2, sat.df[1:10, ])  # first 10 observations
+fitted(m2)[1:10]            # same, automatically in model object
+```
+
+
+
+
+#################################################################################################################################################################################""
+
+

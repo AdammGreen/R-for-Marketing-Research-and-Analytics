@@ -1,0 +1,319 @@
+---
+title: "The Most Human Bot Study D"
+author: "Adam and Sylvie"
+date: "14/10/2023"
+output:
+  html_document:
+    toc: true
+  pdf_document: 
+    toc: true
+---
+
+#Install the packages first
+
+
+#Libraries
+
+```{r Libraries, message=F, warning=F, include=FALSE}
+
+
+library(tidyverse)
+library(extrafont)
+library(hrbrthemes)
+library(ggthemes)
+library(gridExtra)
+library(lme4)
+library(lmerTest)
+library(stargazer)
+library(summarytools)
+library(PerformanceAnalytics)
+library(ggplot2)
+library(effects)
+
+
+```
+
+ 
+
+
+# Load the data (This is an Rdata file - No need to specify the location of the file if the file is in the same folder)
+
+
+```{r}
+
+load("StudyD.rdata")
+
+
+
+```
+
+
+
+# Age and gender/ and list of variables in the dataframe
+
+```{r}
+
+
+mean(StudyD$Age)
+sd(StudyD$Age)
+
+
+summary(StudyD$Gender)
+
+
+str(StudyD)
+
+```
+
+
+# Recap: List of main variables in the Dataframe
+
+IV: INDEPENDANT VARIABLES
+Manip (male or female chatbot)
+
+DV:DEPENDANT VARIABLES
+Attitude
+Uniqueness
+Credibility
+Trust
+ScaleAnimalHuman
+ScaleRobotHuman 
+Competent
+Warm
+Moral
+Mechanical  
+HumanRecommendation
+
+Controls:
+Gender
+Age
+Children
+Stereotypes
+TechReadiness
+Narcissism 
+
+
+# Rename items of factors 
+
+```{r}
+
+levels(StudyD$Manip)[levels(StudyD$Manip)=="1"] <- "Male"
+levels(StudyD$Manip)[levels(StudyD$Manip)=="2"] <- "Female"
+
+
+levels(StudyD$Gender)[levels(StudyD$Gender)=="1"] <- "Men"
+levels(StudyD$Gender)[levels(StudyD$Gender)=="2"] <- "Women"
+
+
+levels(StudyD$Children)[levels(StudyD$Children)=="1"] <- "Yes"
+levels(StudyD$Children)[levels(StudyD$Children)=="2"] <- "No"
+
+```
+
+
+# Find & change the order of the items
+
+```{r}
+
+levels(StudyD$Manip)
+levels(StudyD$Gender)
+levels(StudyD$Children)
+summary(StudyD$Children)
+
+# Change the order of the items
+StudyD$Children <- factor(StudyD$Children, levels = c("No", "Yes"))
+levels(StudyD$Children)
+summary(StudyD$Children)
+
+
+```
+
+
+# Descriptives: comparing the scores between the male and the female chatbots on several variables
+
+```{r}
+
+
+StudyD %>%
+  group_by(Manip) %>%
+  summarize(mean(ScaleRobotHuman), 
+            sd(ScaleRobotHuman))
+
+StudyD %>%
+  group_by(Manip) %>%
+  summarize(mean(ScaleAnimalHuman), 
+            sd(ScaleAnimalHuman))
+
+
+StudyD %>%
+  group_by(Manip) %>%
+  summarize(mean(Trust), 
+            sd(Trust))
+
+
+StudyD %>%
+  group_by(Manip) %>%
+  summarize(mean(Credibility), 
+            sd(Credibility))
+
+
+StudyD %>%
+  group_by(Manip) %>%
+  summarize(mean(Attitude), 
+            sd(Attitude))
+
+```
+
+
+
+## Linear Models by Robot Gender (IV)  with covariates 
+
+```{r}
+
+
+lm1 = lm (Attitude ~ Manip + Stereotypes + Age + Gender + Children + Narcissism  + TechReadiness, data = StudyD)
+summary(lm1)
+
+lm2 = lm (Uniqueness ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm2)
+
+lm3 = lm (Credibility ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm3)
+
+lm4 = lm (Trust ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm4)
+
+lm5 = lm (ScaleAnimalHuman ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm5)
+
+lm6 = lm (ScaleRobotHuman ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm6)
+
+lm7 = lm (CompWarmMoral ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm7)
+
+lm8 = lm (Competent ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm8)
+
+lm9 = lm (Warm ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm9)
+
+lm10 = lm (Moral ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm10)
+
+lm11 = lm (Mechanical ~ Manip + Age + Gender + Children + Narcissism + Stereotypes + TechReadiness, data = StudyD)
+summary(lm11)
+
+lm12 = lm (Stereotypes  ~ Manip + Age + Gender + Children + Narcissism + TechReadiness, data = StudyD)
+summary(lm12)
+
+
+
+
+
+```
+
+
+
+
+## Recap table using the stargazer package 
+
+
+```{r}
+
+stargazer(lm11, lm5, lm6, lm8, lm9, lm10, lm4, lm3, lm2, lm1, 
+          type = "text", 
+          digits = 2,  
+          star.cutoffs = c(0.05, 0.01, 0.001), 
+          out="StudyD.htm",
+          dep.var.labels = c("Mechanical", "ScaleAnimalHuman", "ScaleRobotHuman", "Competent", "Warm", "Moral","Trust","Credibility", "Uniqueness", "Attitude"), 
+          covariate.labels = c("AI: Female", "Age", "Resp Gender: Women", "Children", "Narcissism", "Stereotypes", "TechReadiness"),
+          omit.stat = c("rsq", "f", "adj.rsq", "ser"))
+
+
+```
+
+
+
+## Plots 
+
+Geom_Density 
+
+
+```{r}
+
+StudyD$Manip <- as.factor(StudyD$Manip)
+
+ggplot(StudyD, aes(ScaleRobotHuman, fill = Manip)) +
+  geom_density(alpha=0.5) +
+  xlab("From robot to Human") +
+  scale_fill_manual(values=c("darkgrey","darkcyan"))+
+  theme_bw()
+
+ggplot(StudyD, aes(Warm, fill = Manip)) +
+  geom_density(alpha=0.5) +
+  xlab("Warm") +
+  scale_fill_manual(values=c("darkgrey","darkcyan"))+
+  theme_bw()
+
+
+
+----------
+  
+# you can also save the plot as a png file:
+  
+plot2 <-ggplot(StudyD, aes(Warm, fill = Manip)) +
+  geom_density(alpha=0.5) +
+  xlab("Warm") +
+  scale_fill_manual(values=c("darkgrey","darkcyan"))+
+  theme_bw()
+
+ggsave("plot2.png")
+
+
+
+
+
+```
+
+
+
+BOXPLOT 
+
+```{r}
+
+# Warm
+
+Plota <- ggplot(StudyD, aes(Warm, fill = Manip))+
+  geom_boxplot ()+
+  scale_color_manual(values=c("darkgrey", "cadetblue3"))+
+  scale_fill_manual(values = c("darkgrey", "cadetblue3"))+
+  labs(title="Warm perceptions",x="Warm", y = "Manip")+
+  theme(legend.position="none")
+Plota  
+
+
+```
+
+
+## mediation
+You need to run the Process function fist (see script file Process).
+& You need to transform the factors as numeric variables to use the Process function.
+
+
+```{r}
+
+#super useful line of code. shows if people have a better attitude towards manip if they view as warm.
+#can change manip to woman. So you see if people have a better attitude to woman if they percieve them to be warm
+
+StudyD$Manip <- as.numeric(StudyD$Manip)
+StudyD$Gender <- as.numeric(StudyD$Gender)
+StudyD$Children <- as.numeric(StudyD$Children)
+
+
+process(data = StudyD, y = "Attitude", x = "Manip", m ="Warm", cov = c("Age", "Gender", "Children","TechReadiness"), model = 4)
+
+#if confidence interval include 0 it's not significant. If interval values are both above or below zero its significant (positively or negatively)
+
+```
+
